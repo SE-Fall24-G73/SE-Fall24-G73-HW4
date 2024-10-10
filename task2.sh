@@ -1,30 +1,5 @@
 #!/bin/bash
-DATASET_DIR="dataset1"
 
-# a: List files containing "sample" and at least 3 occurrences of "CSC510"
-echo "a: List files containing "sample" and at least 3 occurrences of "CSC510""
-grep -rl "sample" "$DATASET_DIR" | while read -r file; do
-    count=$(grep -o "CSC510" "$file" | wc -l)
-    if [ "$count" -ge 3 ]; then
-        echo "Occurrences: $count, File: $file" 
-    fi
-done
+cd dataset1
 
-# b: Sorting files in descending order by occurrences of "CSC510" and break ties using file size
-echo -e "b: Sorting files in descending order by occurrences of "CSC510" and break ties using file size"
-grep -rl "sample" "$DATASET_DIR" | while read -r file; do
-    count=$(grep -o "CSC510" "$file" | wc -l)
-    if [ "$count" -ge 3 ]; then
-        size=$(stat -c%s "$file") 
-        echo "$count $size $file"  
-    fi
-done | gawk '{print $1, $2, $3}' | sort -k1,1nr -k2,2nr  # Use gawk to format and sort
-
-# c: Renaming files: “file_” with “filtered_”
-echo -e "c: Renaming files: “file_” with “filtered_”"
-grep -rl "sample" "$DATASET_DIR" | while read -r file; do
-    count=$(grep -o "CSC510" "$file" | wc -l)
-    if [ "$count" -ge 3 ]; then
-        echo "$count $file"  
-    fi
-done | sort -k1,1nr -k2,2n | awk '{sub(/file_/, "filtered_", $2); print $2}'
+grep -c "sample" file* | grep -E ":1$" | cut -d: -f1 | xargs grep -c "CSC510" | grep -E ":[3-9]$" | gawk -F: '{print $1, $2}' | gawk '{cmd = "wc -c " $1 " | awk \047{print $1}\047"; cmd | getline size; close(cmd); print $1, $2, size}' | sort -k2,2nr -k3,3nr | sed 's/file_/filtered_/' | gawk '{print $1}'
